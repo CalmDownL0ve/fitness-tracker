@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Fitness Tracker - Weekly Checklist</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            overflow-x: hidden;
+            width: 100vw;
+            max-width: 100%;
+            position: relative;
+        }
+        
+        html {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        * {
+            box-sizing: border-box;
+            max-width: 100%;
+        }
+        
+        /* Prevent pull-to-refresh on iOS */
+        body {
+            overscroll-behavior-y: contain;
+        }
+        
+        /* Hide scrollbar */
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        /* Better tap highlights */
+        * {
+            -webkit-tap-highlight-color: rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Prevent text selection on buttons */
+        button {
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        
+        /* Smooth scrolling on iOS */
+        .overflow-y-auto {
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Prevent horizontal overflow */
+        #root {
+            overflow-x: hidden;
+            width: 100%;
+            max-width: 100vw;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Lucide React Icons (simplified inline SVG versions)
+        const Calendar = ({ className, ...props }) => (
+            <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+        );
+
+        const Dumbbell = ({ className, ...props }) => (
+            <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m6.5 6.5 11 11"></path>
+                <path d="m21 21-1-1"></path>
+                <path d="m3 3 1 1"></path>
+                <path d="m18 22 4-4"></path>
+                <path d="m2 6 4-4"></path>
+                <path d="m3 10 7-7"></path>
+                <path d="m14 21 7-7"></path>
+            </svg>
+        );
+
+        const Utensils = ({ className, ...props }) => (
+            <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"></path>
+                <path d="M7 2v20"></path>
+                <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"></path>
+            </svg>
+        );
+
+        const TrendingUp = ({ className, ...props }) => (
+            <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                <polyline points="17 6 23 6 23 12"></polyline>
+            </svg>
+        );
+
+        const CheckCircle = ({ className, ...props }) => (
+            <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+        );
+
+        const Circle = ({ className, ...props }) => (
+            <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+            </svg>
+        );
+
+        const Plus = ({ className, ...props }) => (
+            <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+        );
+
+        const X = ({ className, ...props }) => (
+            <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        );
+
+        const Trash2 = ({ className, ...props }) => (
+            <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+        );
+
+        const Check = ({ className, ...props }) => (
+            <svg className={className} {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        );
+
+        // Weekly Meal Plan Data
+        const WEEKLY_MEAL_PLAN = {
+          'Monday': {
+            breakfast: { name: 'Greek yogurt bowl', calories: 450, protein: 35, carbs: 55, fats: 10, description: '1.5c yogurt, 1/2c granola, berries' },
+            snack1: { name: 'Apple + almond butter', calories: 270, protein: 4, carbs: 25, fats: 16, description: '2 tbsp almond butter' },
+            lunch: { name: 'Mediterranean chicken bowl', calories: 550, protein: 50, carbs: 52, fats: 14, description: '6oz chicken, 1c quinoa, veggies, hummus' },
+            snack2: { name: 'Protein shake', calories: 220, protein: 25, carbs: 28, fats: 3, description: '1 scoop, banana, almond milk' },
+            dinner: { name: 'Teriyaki salmon', calories: 680, protein: 48, carbs: 58, fats: 22, description: '6oz salmon, stir-fry veggies, 1c brown rice' }
+          },
+          'Tuesday': {
+            breakfast: { name: 'Veggie omelet + toast', calories: 480, protein: 28, carbs: 42, fats: 20, description: '3 eggs, veggies, feta, 2 slices toast' },
+            snack1: { name: 'Carrots + hummus', calories: 150, protein: 5, carbs: 18, fats: 7, description: '1/4c hummus' },
+            lunch: { name: 'Asian chicken lettuce wraps', calories: 420, protein: 48, carbs: 32, fats: 10, description: '6oz ground chicken, water chestnuts' },
+            snack2: { name: 'Cottage cheese + pineapple', calories: 210, protein: 28, carbs: 24, fats: 5, description: '1c cottage cheese, 1/2c pineapple' },
+            dinner: { name: 'Lemon herb chicken', calories: 620, protein: 52, carbs: 64, fats: 12, description: '6oz chicken, roasted veggies, sweet potato' }
+          },
+          'Wednesday': {
+            breakfast: { name: 'Protein smoothie bowl', calories: 420, protein: 32, carbs: 58, fats: 10, description: 'Protein, berries, banana, granola, chia' },
+            snack1: { name: 'Hard boiled eggs + orange', calories: 220, protein: 14, carbs: 18, fats: 10, description: '2 eggs' },
+            lunch: { name: 'Rotisserie chicken + salad', calories: 520, protein: 48, carbs: 42, fats: 16, description: '6oz chicken, salad, vinaigrette, roll' },
+            snack2: { name: 'Trail mix', calories: 220, protein: 6, carbs: 18, fats: 16, description: '1/4c almonds, dried cranberries' },
+            dinner: { name: 'Shrimp pad thai', calories: 680, protein: 54, carbs: 62, fats: 18, description: '6oz shrimp, rice noodles, egg, veggies' }
+          },
+          'Thursday': {
+            breakfast: { name: 'Overnight oats', calories: 460, protein: 36, carbs: 52, fats: 14, description: 'Oats, protein powder, berries, almond butter' },
+            snack1: { name: 'Greek yogurt + almonds', calories: 260, protein: 22, carbs: 16, fats: 14, description: '1c yogurt, 1/4c almonds' },
+            lunch: { name: 'Mediterranean tuna bowl', calories: 480, protein: 42, carbs: 38, fats: 18, description: '5oz tuna, greens, chickpeas, veggies' },
+            snack2: { name: 'Apple + string cheese', calories: 220, protein: 14, carbs: 24, fats: 10, description: '2 string cheese' },
+            dinner: { name: 'Chicken tikka masala', calories: 650, protein: 54, carbs: 62, fats: 16, description: '6oz chicken, curry sauce, rice, cauliflower' }
+          },
+          'Friday': {
+            breakfast: { name: 'Scrambled eggs + sausage', calories: 420, protein: 32, carbs: 28, fats: 20, description: '3 eggs, 2 turkey sausage, berries' },
+            snack1: { name: 'Protein bar', calories: 200, protein: 20, carbs: 22, fats: 8, description: 'Quest or similar' },
+            lunch: { name: 'Chicken Caesar wrap', calories: 520, protein: 48, carbs: 44, fats: 16, description: '6oz chicken, romaine, wrap, carrots' },
+            snack2: { name: 'Edamame', calories: 190, protein: 17, carbs: 14, fats: 8, description: '1c shelled, lightly salted' },
+            dinner: { name: 'Miso-glazed cod', calories: 580, protein: 48, carbs: 68, fats: 8, description: '6oz cod, bok choy, mushrooms, rice' }
+          },
+          'Saturday': {
+            breakfast: { name: 'Breakfast burrito', calories: 520, protein: 32, carbs: 48, fats: 20, description: '3 eggs, beans, salsa, avocado, tortilla' },
+            snack1: { name: 'Banana + peanut butter', calories: 290, protein: 8, carbs: 32, fats: 16, description: '2 tbsp peanut butter' },
+            lunch: { name: 'Chicken souvlaki plate', calories: 580, protein: 52, carbs: 46, fats: 18, description: '6oz chicken skewers, salad, tzatziki, pita' },
+            snack2: { name: 'Veggies + guacamole', calories: 120, protein: 2, carbs: 12, fats: 8, description: '1/4c guacamole' },
+            dinner: { name: 'Honey-ginger salmon', calories: 680, protein: 50, carbs: 58, fats: 22, description: '6oz salmon, Brussels sprouts, quinoa' }
+          },
+          'Sunday': {
+            breakfast: { name: 'Protein pancakes', calories: 480, protein: 38, carbs: 58, fats: 10, description: '3 pancakes, berries' },
+            snack1: { name: 'Cottage cheese + peaches', calories: 190, protein: 28, carbs: 20, fats: 5, description: '1c cottage cheese, 1/2c peaches' },
+            lunch: { name: 'Poke bowl', calories: 620, protein: 52, carbs: 64, fats: 14, description: '6oz ahi tuna, rice, edamame, veggies' },
+            snack2: { name: 'Mixed nuts + apple', calories: 260, protein: 6, carbs: 22, fats: 18, description: '1/4c nuts' },
+            dinner: { name: 'Lemon chicken', calories: 600, protein: 50, carbs: 58, fats: 12, description: '6oz chicken, Mediterranean veggies, couscous' }
+          }
+        };
+
+        // Weekly Workout Plan Data
+        const WEEKLY_WORKOUT_PLAN = {
+          'Monday': { 
+            type: 'Upper Body Push/Pull', 
+            duration: 60, 
+            description: 'Incline push-ups, rows, pike push-ups, planks, wall slides',
+            instructions: `Complete 3 rounds with 60 sec rest between exercises and 2 min rest between rounds:
+
+• Incline push-ups (hands on counter): 3 sets x 8-10 reps
+  - Place hands on elevated surface (counter/couch)
+  - Keep body straight, lower chest to surface
+  - Push back up, fully extending arms
+  
+• Bodyweight rows (under table/TRX): 3 x 10 reps
+  - Lie under sturdy table, grab edge
+  - Pull chest to table, squeeze shoulder blades
+  - Lower with control
+  
+• Pike push-ups: 3 x 6-8 reps
+  - Start in downward dog position
+  - Lower head toward ground between hands
+  - Push back up
+  
+• Plank hold: 3 x 20-30 seconds
+  - Forearms on ground, body straight
+  - Engage core, don't let hips sag
+  
+• Wall slides: 3 x 12 reps
+  - Back against wall, arms in "goalpost" position
+  - Slide arms up wall, keeping contact
+  - Return to start`
+          },
+          'Tuesday': { 
+            type: 'Peloton Cardio', 
+            duration: 60, 
+            description: '20-min Low Impact + 15-min Scenic Ride',
+            instructions: `Peloton Workout Structure:
+
+Warm-up (5 min):
+• Easy resistance spin to get blood flowing
+• Gradually increase cadence
+
+Main Workout (45 min):
+• 20-minute Low Impact Ride (beginner level)
+  - Focus on maintaining steady pace
+  - Keep resistance at comfortable level
+  - Flat road profile
+  
+• 5-minute recovery spin
+  - Very easy resistance
+  - Allow heart rate to come down
+  
+• 15-minute Scenic Ride (moderate resistance)
+  - Enjoy the scenery
+  - Moderate effort level
+  
+• 5-minute easy cool-down
+
+Cool-down (10 min):
+• 5 min easy spin
+• Hip flexor, quad, hamstring stretches`
+          },
+          'Wednesday': { 
+            type: 'Lower Body Strength', 
+            duration: 60, 
+            description: 'Squats, reverse lunges, glute bridges, wall sits, calf raises',
+            instructions: `Complete 3 rounds with 60 sec rest between exercises and 2 min rest between rounds:
+
+• Bodyweight squats: 3 x 15 reps
+  - Feet shoulder-width apart
+  - Lower hips back and down (like sitting in chair)
+  - Keep chest up, knees track over toes
+  - Stand back up, squeeze glutes at top
+  
+• Reverse lunges (alternating): 3 x 10 each leg
+  - Step back with one leg
+  - Lower back knee toward ground
+  - Push through front heel to return
+  - Alternate legs
+  
+• Glute bridges: 3 x 15 reps
+  - Lie on back, feet flat, knees bent
+  - Lift hips up, squeeze glutes hard
+  - Lower with control
+  
+• Wall sit: 3 x 30 seconds
+  - Back against wall, slide down to 90-degree angle
+  - Thighs parallel to ground
+  - Hold position
+  
+• Calf raises: 3 x 20 reps
+  - Stand on edge of step or flat ground
+  - Rise up on toes as high as possible
+  - Lower with control`
+          },
+          'Thursday': { 
+            type: 'Peloton Cardio', 
+            duration: 60, 
+            description: '30-min Low Impact + 10-min Recovery Ride',
+            instructions: `Peloton Workout Structure:
+
+Warm-up (5 min):
+• Easy resistance spin
+
+Main Workout (45 min):
+• 30-minute Low Impact Ride
+  - Focus on maintaining steady pace throughout
+  - Keep resistance moderate and consistent
+  - Build endurance with longer continuous effort
+  
+• 10-minute Recovery Ride
+  - Very low resistance
+  - Easy spinning
+  - Focus on breathing and recovery
+  
+• 5-minute gentle stretching on bike
+
+Cool-down (10 min):
+• Easy spin
+• Full leg stretching routine off bike
+  - Quad stretch: 30 sec each leg
+  - Hamstring stretch: 30 sec each leg
+  - Hip flexor stretch: 30 sec each leg
+  - Calf stretch: 30 sec each leg`
+          },
+          'Friday': { 
+            type: 'Full Body Circuit', 
+            duration: 60, 
+            description: 'Push-ups, squats, plank variations, step-ups, superman holds',
+            instructions: `Complete 3 rounds with 60 sec rest between exercises and 2 min rest between rounds:
+
+• Incline push-ups: 3 x 8-10 reps
+  - Use same technique as Monday
+  
+• Bodyweight squats: 3 x 12 reps
+  - Same form as Wednesday
+  
+• Plank to downward dog: 3 x 8 reps
+  - Start in plank position
+  - Push hips up to downward dog
+  - Return to plank
+  
+• Step-ups on stairs: 3 x 10 each leg
+  - Step up onto stair/box with one leg
+  - Drive through heel, stand fully on step
+  - Step down with control
+  - Alternate legs
+  
+• Superman holds: 3 x 20 seconds
+  - Lie face down on ground
+  - Lift arms and legs simultaneously
+  - Hold position, squeeze lower back
+  
+• Mountain climbers: 3 x 20 total
+  - Start in plank position
+  - Drive knees to chest alternating quickly
+  - Keep core tight`
+          },
+          'Saturday': { 
+            type: 'Rest Day', 
+            duration: 0, 
+            description: 'Active recovery: optional 20-30 min walk',
+            instructions: `Rest and Recovery Day
+
+Your body needs rest to build muscle and recover. Today is about light movement and self-care:
+
+Optional Activities:
+• 20-30 minute easy walk outside
+  - Keep pace conversational
+  - Enjoy fresh air
+  - No need to track pace or distance
+  
+• Light stretching (10-15 minutes)
+  - Focus on areas that feel tight
+  - Hold each stretch 30-60 seconds
+  - Breathe deeply
+  
+• Foam rolling (if available)
+  - Roll out sore muscles gently
+  
+• Focus on meal prep for the week
+• Hydrate well
+• Get quality sleep (aim for 7-9 hours)`
+          },
+          'Sunday': { 
+            type: 'Rest Day', 
+            duration: 0, 
+            description: 'Active recovery: optional 20-30 min walk or light yoga',
+            instructions: `Rest and Recovery Day
+
+Another important recovery day to prepare for the week ahead:
+
+Optional Activities:
+• 20-30 minute easy walk
+  - Same as Saturday - keep it light and enjoyable
+  
+• Light yoga session (20-30 minutes)
+  - Focus on stretching and breathing
+  - Sun salutations
+  - Pigeon pose for hips
+  - Child's pose for back
+  - Savasana for relaxation
+  
+• Mobility work
+  - Hip circles
+  - Arm circles  
+  - Gentle torso twists
+  
+• Meal prep for Monday-Wednesday
+• Review your goals for the upcoming week
+• Hydrate and rest well`
+          }
+        };
+
+        function FitnessTracker() {
+          const [activeTab, setActiveTab] = useState('dashboard');
+          const [completedItems, setCompletedItems] = useState({});
+          const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+          const [customWorkouts, setCustomWorkouts] = useState([]);
+          const [customMeals, setCustomMeals] = useState([]);
+          const [showWorkoutModal, setShowWorkoutModal] = useState(false);
+          const [showMealModal, setShowMealModal] = useState(false);
+
+          // Load data from localStorage on mount
+          useEffect(() => {
+            loadData();
+          }, []);
+
+          const loadData = () => {
+            try {
+              const completedData = localStorage.getItem('completed-items');
+              const workoutData = localStorage.getItem('custom-workouts');
+              const mealData = localStorage.getItem('custom-meals');
+              
+              if (completedData) {
+                setCompletedItems(JSON.parse(completedData));
+              }
+              if (workoutData) {
+                setCustomWorkouts(JSON.parse(workoutData));
+              }
+              if (mealData) {
+                setCustomMeals(JSON.parse(mealData));
+              }
+            } catch (error) {
+              console.log('No existing data found, starting fresh');
+            }
+          };
+
+          const saveCompletedItems = (items) => {
+            try {
+              localStorage.setItem('completed-items', JSON.stringify(items));
+              setCompletedItems(items);
+            } catch (error) {
+              console.error('Error saving completed items:', error);
+            }
+          };
+
+          const saveCustomWorkouts = (workouts) => {
+            try {
+              localStorage.setItem('custom-workouts', JSON.stringify(workouts));
+              setCustomWorkouts(workouts);
+            } catch (error) {
+              console.error('Error saving custom workouts:', error);
+            }
+          };
+
+          const saveCustomMeals = (meals) => {
+            try {
+              localStorage.setItem('custom-meals', JSON.stringify(meals));
+              setCustomMeals(meals);
+            } catch (error) {
+              console.error('Error saving custom meals:', error);
+            }
+          };
+
+          // Toggle completion status
+          const toggleItem = (date, type, itemKey) => {
+            const key = `${date}-${type}-${itemKey}`;
+            const updated = { ...completedItems };
+            updated[key] = !updated[key];
+            saveCompletedItems(updated);
+          };
+
+          const isItemCompleted = (date, type, itemKey) => {
+            const key = `${date}-${type}-${itemKey}`;
+            return completedItems[key] || false;
+          };
+
+          // Custom item functions
+          const addCustomWorkout = (workout) => {
+            const newWorkout = {
+              ...workout,
+              id: Date.now(),
+              date: selectedDate,
+              timestamp: new Date().toISOString()
+            };
+            saveCustomWorkouts([...customWorkouts, newWorkout]);
+            setShowWorkoutModal(false);
+          };
+
+          const deleteCustomWorkout = (id) => {
+            saveCustomWorkouts(customWorkouts.filter(w => w.id !== id));
+          };
+
+          const addCustomMeal = (meal) => {
+            const newMeal = {
+              ...meal,
+              id: Date.now(),
+              date: selectedDate,
+              timestamp: new Date().toISOString()
+            };
+            saveCustomMeals([...customMeals, newMeal]);
+            setShowMealModal(false);
+          };
+
+          const deleteCustomMeal = (id) => {
+            saveCustomMeals(customMeals.filter(m => m.id !== id));
+          };
+
+          // Get day of week for selected date
+          const getDayOfWeek = (date) => {
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            // Parse the date string correctly to avoid timezone issues
+            const [year, month, day] = date.split('-').map(Number);
+            const d = new Date(year, month - 1, day);
+            return days[d.getDay()];
+          };
+
+          const currentDay = getDayOfWeek(selectedDate);
+          const todaysPlan = WEEKLY_MEAL_PLAN[currentDay] || {};
+          const todaysWorkout = WEEKLY_WORKOUT_PLAN[currentDay];
+          const todaysCustomWorkouts = customWorkouts.filter(w => w.date === selectedDate);
+          const todaysCustomMeals = customMeals.filter(m => m.date === selectedDate);
+
+          // Calculate daily totals from plan - ONLY include checked meals
+          const plannedMeals = Object.entries(todaysPlan);
+          const checkedMeals = plannedMeals.filter(([key]) => isItemCompleted(selectedDate, 'meal', key));
+          const plannedCalories = checkedMeals.reduce((sum, [_, meal]) => sum + (meal?.calories || 0), 0);
+          const plannedProtein = checkedMeals.reduce((sum, [_, meal]) => sum + (meal?.protein || 0), 0);
+          const plannedCarbs = checkedMeals.reduce((sum, [_, meal]) => sum + (meal?.carbs || 0), 0);
+          const plannedFats = checkedMeals.reduce((sum, [_, meal]) => sum + (meal?.fats || 0), 0);
+
+          // Add custom meals to totals
+          const customCalories = todaysCustomMeals.reduce((sum, m) => sum + (m.calories || 0), 0);
+          const customProtein = todaysCustomMeals.reduce((sum, m) => sum + (m.protein || 0), 0);
+          const customCarbs = todaysCustomMeals.reduce((sum, m) => sum + (m.carbs || 0), 0);
+          const customFats = todaysCustomMeals.reduce((sum, m) => sum + (m.fats || 0), 0);
+
+          const dailyCalories = plannedCalories + customCalories;
+          const dailyProtein = plannedProtein + customProtein;
+          const dailyCarbs = plannedCarbs + customCarbs;
+          const dailyFats = plannedFats + customFats;
+
+          // Calculate weekly completion
+          const getWeekDates = (date) => {
+            // Parse date to avoid timezone issues
+            const [year, month, day] = date.split('-').map(Number);
+            const d = new Date(year, month - 1, day);
+            const dayOfWeek = d.getDay();
+            const diff = d.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+            const monday = new Date(year, month - 1, diff);
+            const dates = [];
+            for (let i = 0; i < 7; i++) {
+              const current = new Date(monday);
+              current.setDate(monday.getDate() + i);
+              const y = current.getFullYear();
+              const m = String(current.getMonth() + 1).padStart(2, '0');
+              const dt = String(current.getDate()).padStart(2, '0');
+              dates.push(`${y}-${m}-${dt}`);
+            }
+            return dates;
+          };
+
+          const weekDates = getWeekDates(selectedDate);
+          const weeklyWorkoutCount = weekDates.filter(date => {
+            const day = getDayOfWeek(date);
+            const workout = WEEKLY_WORKOUT_PLAN[day];
+            return workout && workout.duration > 0 && isItemCompleted(date, 'workout', day);
+          }).length;
+
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white overflow-x-hidden w-full max-w-full">
+              {/* Header */}
+              <div className="bg-slate-800 border-b border-slate-700 shadow-lg">
+                <div className="w-full max-w-7xl mx-auto px-3 py-4">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div className="flex items-center gap-2">
+                      <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-2 rounded-xl">
+                        <Dumbbell className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h1 className="text-xl font-bold">Fitness Tracker</h1>
+                        <p className="text-slate-400 text-xs hidden sm:block">Your Year-Long Transformation</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => setShowAdminPanel(true)}
+                        className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-all"
+                        title="Upload new schedules"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => {
+                          const [year, month, day] = selectedDate.split('-').map(Number);
+                          const d = new Date(year, month - 1, day);
+                          d.setDate(d.getDate() - 1);
+                          const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                          setSelectedDate(newDate);
+                        }}
+                        className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-all"
+                        title="Previous day"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <input
+                        type="date"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="bg-slate-700 border border-slate-600 rounded-lg px-2 py-2 text-white text-sm w-36"
+                      />
+                      <button
+                        onClick={() => {
+                          const [year, month, day] = selectedDate.split('-').map(Number);
+                          const d = new Date(year, month - 1, day);
+                          d.setDate(d.getDate() + 1);
+                          const newDate = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                          setSelectedDate(newDate);
+                        }}
+                        className="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition-all"
+                        title="Next day"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation Tabs */}
+              <div className="bg-slate-800 border-b border-slate-700">
+                <div className="w-full max-w-7xl mx-auto px-2">
+                  <div className="flex gap-0.5 overflow-x-auto scrollbar-hide">
+                    {[
+                      { id: 'dashboard', icon: TrendingUp, label: 'Dashboard' },
+                      { id: 'workouts', icon: Dumbbell, label: 'Workouts' },
+                      { id: 'meals', icon: Utensils, label: 'Meals' }
+                    ].map(tab => (
+                      <button
+                        key={tab.id}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-1.5 px-4 py-3 font-medium transition-all whitespace-nowrap text-sm min-w-[90px] justify-center ${
+                          activeTab === tab.id
+                            ? 'bg-slate-900 text-blue-400 border-b-2 border-blue-400'
+                            : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                        }`}
+                      >
+                        <tab.icon className="w-4 h-4" />
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Main Content */}
+              <div className="w-full max-w-7xl mx-auto px-3 py-4">
+                {activeTab === 'dashboard' && (
+                  <DashboardView
+                    selectedDate={selectedDate}
+                    currentDay={currentDay}
+                    dailyCalories={dailyCalories}
+                    dailyProtein={dailyProtein}
+                    dailyCarbs={dailyCarbs}
+                    dailyFats={dailyFats}
+                    weeklyWorkoutCount={weeklyWorkoutCount}
+                    todaysWorkout={todaysWorkout}
+                    todaysPlan={todaysPlan}
+                    isItemCompleted={isItemCompleted}
+                    toggleItem={toggleItem}
+                  />
+                )}
+
+                {activeTab === 'workouts' && (
+                  <WorkoutsView
+                    currentDay={currentDay}
+                    selectedDate={selectedDate}
+                    todaysWorkout={todaysWorkout}
+                    customWorkouts={todaysCustomWorkouts}
+                    isCompleted={isItemCompleted(selectedDate, 'workout', currentDay)}
+                    onToggle={() => toggleItem(selectedDate, 'workout', currentDay)}
+                    onAddCustom={() => setShowWorkoutModal(true)}
+                    onDeleteCustom={deleteCustomWorkout}
+                  />
+                )}
+
+                {activeTab === 'meals' && (
+                  <MealsView
+                    currentDay={currentDay}
+                    selectedDate={selectedDate}
+                    todaysPlan={todaysPlan}
+                    customMeals={todaysCustomMeals}
+                    isItemCompleted={isItemCompleted}
+                    toggleItem={toggleItem}
+                    onAddCustom={() => setShowMealModal(true)}
+                    onDeleteCustom={deleteCustomMeal}
+                    dailyCalories={dailyCalories}
+                    dailyProtein={dailyProtein}
+                    dailyCarbs={dailyCarbs}
+                    dailyFats={dailyFats}
+                  />
+                )}
+              </div>
+
+              {/* Modals */}
+              {showWorkoutModal && (
+                <WorkoutModal
+                  onClose={() => setShowWorkoutModal(false)}
+                  onSave={addCustomWorkout}
+                />
+              )}
+
+              {showMealModal && (
+                <MealModal
+                  onClose={() => setShowMealModal(false)}
+                  onSave={addCustomMeal}
+                />
+              )}
+            </div>
+          );
+        }
+
+        // Dashboard View Component
+        function DashboardView({ selectedDate, currentDay, dailyCalories, dailyProtein, dailyCarbs, dailyFats, weeklyWorkoutCount, todaysWorkout, todaysPlan, isItemCompleted, toggleItem }) {
+          const targetCalories = 2200;
+          const targetProtein = 200;
+          const targetCarbs = 190;
+          const targetFats = 75;
+          const targetWorkouts = 5;
+
+          const plannedMeals = Object.entries(todaysPlan);
+          const workoutCompleted = isItemCompleted(selectedDate, 'workout', currentDay);
+          const completedMealsCount = plannedMeals.filter(([key]) => 
+            isItemCompleted(selectedDate, 'meal', key)
+          ).length;
+
+          return (
+            <div className="space-y-4">
+              <div className="flex flex-col gap-2 text-center">
+                <h2 className="text-xl font-bold">{currentDay}</h2>
+                <div className="text-slate-400 text-xs">
+                  {(() => {
+                    const [year, month, day] = selectedDate.split('-').map(Number);
+                    const d = new Date(year, month - 1, day);
+                    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+                  })()}
+                </div>
+              </div>
+
+              {/* Nutrition Stats */}
+              <div className="grid grid-cols-2 gap-2">
+                <StatCard
+                  title="Calories"
+                  value={dailyCalories}
+                  target={targetCalories}
+                  unit="cal"
+                  color="blue"
+                />
+                <StatCard
+                  title="Protein"
+                  value={dailyProtein}
+                  target={targetProtein}
+                  unit="g"
+                  color="red"
+                />
+                <StatCard
+                  title="Carbs"
+                  value={dailyCarbs}
+                  target={targetCarbs}
+                  unit="g"
+                  color="yellow"
+                />
+                <StatCard
+                  title="Fats"
+                  value={dailyFats}
+                  target={targetFats}
+                  unit="g"
+                  color="green"
+                />
+              </div>
+
+              {/* Weekly Progress */}
+              <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                <h3 className="text-xl font-bold mb-4">Weekly Progress</h3>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <div className="flex justify-between mb-2">
+                      <span className="text-slate-400">Workouts This Week</span>
+                      <span className="font-bold">{weeklyWorkoutCount} / {targetWorkouts}</span>
+                    </div>
+                    <div className="w-full bg-slate-700 rounded-full h-3">
+                      <div
+                        className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all"
+                        style={{ width: `${Math.min((weeklyWorkoutCount / targetWorkouts) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Today's Summary */}
+              <div className="grid grid-cols-1 gap-3">
+                {/* Workout Summary */}
+                <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold">Today's Workout</h3>
+                    <Dumbbell className="w-6 h-6 text-blue-400" />
+                  </div>
+                  {todaysWorkout ? (
+                    <div 
+                      onClick={() => toggleItem(selectedDate, 'workout', currentDay)}
+                      className="flex items-start gap-3 p-4 bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-600 transition-all"
+                    >
+                      {workoutCompleted ? (
+                        <CheckCircle className="w-6 h-6 text-green-400 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <Circle className="w-6 h-6 text-slate-400 flex-shrink-0 mt-0.5" />
+                      )}
+                      <div className="flex-1">
+                        <div className="font-medium">{todaysWorkout.type}</div>
+                        <div className="text-sm text-slate-400">{todaysWorkout.duration} minutes</div>
+                        <div className="text-xs text-slate-500 mt-1">{todaysWorkout.description}</div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-slate-400">No workout planned for today</p>
+                  )}
+                </div>
+
+                {/* Meals Summary */}
+                <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold">Today's Meals</h3>
+                    <div className="flex items-center gap-2">
+                      <Utensils className="w-6 h-6 text-purple-400" />
+                      <span className="text-sm text-slate-400">{completedMealsCount}/5 logged</span>
+                    </div>
+                  </div>
+                  {plannedMeals.length === 0 ? (
+                    <p className="text-slate-400">No meals planned</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {plannedMeals.map(([key, meal]) => {
+                        const mealLabels = {
+                          breakfast: 'Breakfast',
+                          snack1: 'Snack 1',
+                          lunch: 'Lunch',
+                          snack2: 'Snack 2',
+                          dinner: 'Dinner'
+                        };
+                        return (
+                          <div key={key} className="flex items-center justify-between text-sm">
+                            <div className="flex items-center gap-2">
+                              {isItemCompleted(selectedDate, 'meal', key) ? (
+                                <CheckCircle className="w-4 h-4 text-green-400" />
+                              ) : (
+                                <Circle className="w-4 h-4 text-slate-400" />
+                              )}
+                              <span>{mealLabels[key]}: {meal.name}</span>
+                            </div>
+                            <span className="text-slate-400">{meal.calories} cal</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        // Stat Card Component
+        function StatCard({ title, value, target, unit, color }) {
+          const percentage = Math.min((value / target) * 100, 100);
+          const colorClasses = {
+            blue: 'from-blue-500 to-blue-600',
+            red: 'from-red-500 to-red-600',
+            yellow: 'from-yellow-500 to-yellow-600',
+            green: 'from-green-500 to-green-600'
+          };
+
+          return (
+            <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
+              <div className="flex justify-between items-start mb-1">
+                <span className="text-slate-400 text-xs">{title}</span>
+                <span className="text-xs text-slate-500">{percentage.toFixed(0)}%</span>
+              </div>
+              <div className="text-xl font-bold mb-1">
+                {value}<span className="text-sm text-slate-400">/{target}</span>
+              </div>
+              <div className="text-xs text-slate-500 mb-2">{unit}</div>
+              <div className="w-full bg-slate-700 rounded-full h-1.5">
+                <div
+                  className={`bg-gradient-to-r ${colorClasses[color]} h-1.5 rounded-full transition-all`}
+                  style={{ width: `${percentage}%` }}
+                />
+              </div>
+            </div>
+          );
+        }
+
+        // Workouts View Component
+        function WorkoutsView({ currentDay, selectedDate, todaysWorkout, customWorkouts, isCompleted, onToggle, onAddCustom, onDeleteCustom }) {
+          return (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-3">
+                <h2 className="text-xl font-bold">Workouts - {currentDay}</h2>
+                <button
+                  onClick={onAddCustom}
+                  className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Extra Workout
+                </button>
+              </div>
+
+              {/* Planned Workout */}
+              {todaysWorkout && (
+                <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                  <h3 className="text-lg font-bold mb-4 text-blue-400">Planned Workout</h3>
+                  <div 
+                    onClick={onToggle}
+                    className="flex items-start gap-4 p-6 bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-600 transition-all mb-4"
+                  >
+                    <button className="flex-shrink-0 mt-1">
+                      {isCompleted ? (
+                        <CheckCircle className="w-8 h-8 text-green-400" />
+                      ) : (
+                        <Circle className="w-8 h-8 text-slate-400" />
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <Dumbbell className="w-6 h-6 text-blue-400" />
+                        <h4 className="text-xl font-bold">{todaysWorkout.type}</h4>
+                      </div>
+                      <p className="text-slate-400 mb-2">{todaysWorkout.duration} minutes</p>
+                      <p className="text-sm text-slate-300">{todaysWorkout.description}</p>
+                      {isCompleted && (
+                        <div className="mt-3 flex items-center gap-2 text-sm text-green-400">
+                          <Check className="w-4 h-4" />
+                          <span>Completed!</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Workout Instructions */}
+                  {todaysWorkout.instructions && (
+                    <div className="bg-slate-900/50 rounded-lg p-6">
+                      <h4 className="text-md font-bold mb-3 text-blue-300">Workout Instructions</h4>
+                      <pre className="text-sm text-slate-300 whitespace-pre-wrap font-sans leading-relaxed">
+                        {todaysWorkout.instructions}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Custom Workouts */}
+              {customWorkouts.length > 0 && (
+                <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                  <h3 className="text-lg font-bold mb-4 text-purple-400">Additional Workouts</h3>
+                  <div className="space-y-3">
+                    {customWorkouts.map(workout => (
+                      <div key={workout.id} className="flex items-start gap-4 p-4 bg-slate-700 rounded-lg">
+                        <Dumbbell className="w-5 h-5 text-purple-400 mt-1 flex-shrink-0" />
+                        <div className="flex-1">
+                          <h4 className="font-bold">{workout.type}</h4>
+                          <p className="text-sm text-slate-400">{workout.duration} minutes</p>
+                          {workout.notes && (
+                            <p className="text-sm text-slate-300 mt-1 italic">"{workout.notes}"</p>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => onDeleteCustom(workout.id)}
+                          className="p-2 hover:bg-slate-600 rounded-lg transition-all"
+                        >
+                          <Trash2 className="w-5 h-5 text-slate-400 hover:text-red-400" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {!todaysWorkout && customWorkouts.length === 0 && (
+                <div className="bg-slate-800 rounded-xl p-12 border border-slate-700 text-center">
+                  <Dumbbell className="w-16 h-16 mx-auto mb-4 text-slate-600" />
+                  <p className="text-slate-400 text-lg">No workouts planned for {currentDay}</p>
+                  <p className="text-slate-500 text-sm mt-2">Click "Add Extra Workout" to log one</p>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // Meals View Component
+        function MealsView({ currentDay, selectedDate, todaysPlan, customMeals, isItemCompleted, toggleItem, onAddCustom, onDeleteCustom, dailyCalories, dailyProtein, dailyCarbs, dailyFats }) {
+          const mealKeys = ['breakfast', 'snack1', 'lunch', 'snack2', 'dinner'];
+          const mealLabels = {
+            breakfast: 'Breakfast',
+            snack1: 'Snack 1',
+            lunch: 'Lunch',
+            snack2: 'Snack 2',
+            dinner: 'Dinner'
+          };
+
+          return (
+            <div className="space-y-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center sm:justify-between gap-3">
+                <h2 className="text-xl font-bold">Meals - {currentDay}</h2>
+                <button
+                  onClick={onAddCustom}
+                  className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-all text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Extra Meal
+                </button>
+              </div>
+
+              {/* Daily Totals */}
+              <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                <h3 className="text-lg font-bold mb-4">Daily Totals</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="text-sm text-slate-400">Calories</div>
+                    <div className="text-2xl font-bold text-blue-400">{dailyCalories}</div>
+                    <div className="text-xs text-slate-500">/ 2200 cal</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-400">Protein</div>
+                    <div className="text-2xl font-bold text-red-400">{dailyProtein}g</div>
+                    <div className="text-xs text-slate-500">/ 200g</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-400">Carbs</div>
+                    <div className="text-2xl font-bold text-yellow-400">{dailyCarbs}g</div>
+                    <div className="text-xs text-slate-500">/ 190g</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-400">Fats</div>
+                    <div className="text-2xl font-bold text-green-400">{dailyFats}g</div>
+                    <div className="text-xs text-slate-500">/ 75g</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Planned Meals */}
+              <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                <h3 className="text-lg font-bold mb-4 text-purple-400">Planned Meals</h3>
+                <div className="space-y-3">
+                  {mealKeys.map(key => {
+                    const meal = todaysPlan[key];
+                    if (!meal) return null;
+                    
+                    const completed = isItemCompleted(selectedDate, 'meal', key);
+                    
+                    return (
+                      <div
+                        key={key}
+                        onClick={() => toggleItem(selectedDate, 'meal', key)}
+                        className="flex items-start gap-4 p-4 bg-slate-700 rounded-lg cursor-pointer hover:bg-slate-600 transition-all"
+                      >
+                        <button className="flex-shrink-0 mt-1">
+                          {completed ? (
+                            <CheckCircle className="w-6 h-6 text-green-400" />
+                          ) : (
+                            <Circle className="w-6 h-6 text-slate-400" />
+                          )}
+                        </button>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-4 mb-2">
+                            <div className="flex items-center gap-2">
+                              <Utensils className="w-5 h-5 text-purple-400 flex-shrink-0" />
+                              <div>
+                                <h4 className="font-bold">{mealLabels[key]}</h4>
+                                <p className="text-sm text-slate-300">{meal.name}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-xs text-slate-400 mb-2">{meal.description}</p>
+                          <div className="flex gap-4 text-xs">
+                            <span className="text-blue-400">{meal.calories} cal</span>
+                            <span className="text-red-400">{meal.protein}g protein</span>
+                            <span className="text-yellow-400">{meal.carbs}g carbs</span>
+                            <span className="text-green-400">{meal.fats}g fat</span>
+                          </div>
+                          {completed && (
+                            <div className="mt-2 flex items-center gap-2 text-xs text-green-400">
+                              <Check className="w-3 h-3" />
+                              <span>Logged</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Custom Meals */}
+              {customMeals.length > 0 && (
+                <div className="bg-slate-800 rounded-xl p-6 border border-slate-700">
+                  <h3 className="text-lg font-bold mb-4 text-pink-400">Additional Meals</h3>
+                  <div className="space-y-3">
+                    {customMeals.map(meal => (
+                      <div key={meal.id} className="flex items-start gap-4 p-4 bg-slate-700 rounded-lg">
+                        <Utensils className="w-5 h-5 text-pink-400 mt-1 flex-shrink-0" />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-1">
+                            <h4 className="font-bold">{meal.name}</h4>
+                            <button
+                              onClick={() => onDeleteCustom(meal.id)}
+                              className="p-1 hover:bg-slate-600 rounded transition-all"
+                            >
+                              <Trash2 className="w-4 h-4 text-slate-400 hover:text-red-400" />
+                            </button>
+                          </div>
+                          <p className="text-xs text-slate-400 mb-2">{meal.type}</p>
+                          <div className="flex gap-3 text-xs">
+                            <span className="text-blue-400">{meal.calories} cal</span>
+                            <span className="text-red-400">{meal.protein}g protein</span>
+                            <span className="text-yellow-400">{meal.carbs}g carbs</span>
+                            <span className="text-green-400">{meal.fats}g fat</span>
+                          </div>
+                          {meal.notes && (
+                            <p className="text-xs text-slate-300 mt-2 italic">"{meal.notes}"</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // Workout Modal Component
+        function WorkoutModal({ onClose, onSave }) {
+          const [type, setType] = useState('');
+          const [duration, setDuration] = useState('');
+          const [notes, setNotes] = useState('');
+
+          const workoutTypes = [
+            'Upper Body Strength',
+            'Lower Body Strength',
+            'Full Body Circuit',
+            'Peloton Cardio',
+            'Running',
+            'Other'
+          ];
+
+          const handleSubmit = (e) => {
+            e.preventDefault();
+            onSave({
+              type,
+              duration: parseInt(duration),
+              notes
+            });
+          };
+
+          return (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+              <div className="bg-slate-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-700">
+                <div className="p-6 border-b border-slate-700 flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Log Workout</h2>
+                  <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-lg">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Workout Type</label>
+                    <select
+                      value={type}
+                      onChange={(e) => setType(e.target.value)}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white"
+                      required
+                    >
+                      <option value="">Select type...</option>
+                      {workoutTypes.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
+                    <input
+                      type="number"
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white"
+                      placeholder="45"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Notes (optional)</label>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white"
+                      rows="3"
+                      placeholder="How did you feel? Any achievements?"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-lg font-medium transition-all"
+                    >
+                      Save Workout
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          );
+        }
+
+        // Meal Modal Component
+        function MealModal({ onClose, onSave }) {
+          const [name, setName] = useState('');
+          const [type, setType] = useState('');
+          const [calories, setCalories] = useState('');
+          const [protein, setProtein] = useState('');
+          const [carbs, setCarbs] = useState('');
+          const [fats, setFats] = useState('');
+          const [notes, setNotes] = useState('');
+
+          const mealTypes = ['Breakfast', 'Snack 1', 'Lunch', 'Snack 2', 'Dinner'];
+
+          const handleSubmit = (e) => {
+            e.preventDefault();
+            onSave({
+              name,
+              type,
+              calories: parseInt(calories),
+              protein: parseInt(protein),
+              carbs: parseInt(carbs),
+              fats: parseInt(fats),
+              notes
+            });
+          };
+
+          return (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+              <div className="bg-slate-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-slate-700">
+                <div className="p-6 border-b border-slate-700 flex items-center justify-between">
+                  <h2 className="text-2xl font-bold">Log Meal</h2>
+                  <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-lg">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+                
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Meal Name</label>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white"
+                      placeholder="Greek yogurt bowl"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Meal Type</label>
+                    <select
+                      value={type}
+                      onChange={(e) => setType(e.target.value)}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white"
+                      required
+                    >
+                      <option value="">Select type...</option>
+                      {mealTypes.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Calories</label>
+                      <input
+                        type="number"
+                        value={calories}
+                        onChange={(e) => setCalories(e.target.value)}
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white"
+                        placeholder="450"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Protein (g)</label>
+                      <input
+                        type="number"
+                        value={protein}
+                        onChange={(e) => setProtein(e.target.value)}
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white"
+                        placeholder="35"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Carbs (g)</label>
+                      <input
+                        type="number"
+                        value={carbs}
+                        onChange={(e) => setCarbs(e.target.value)}
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white"
+                        placeholder="55"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Fats (g)</label>
+                      <input
+                        type="number"
+                        value={fats}
+                        onChange={(e) => setFats(e.target.value)}
+                        className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white"
+                        placeholder="10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">Notes (optional)</label>
+                    <textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      className="w-full bg-slate-700 border border-slate-600 rounded-lg px-4 py-3 text-white"
+                      rows="2"
+                      placeholder="Any additional details..."
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 rounded-lg font-medium transition-all"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 rounded-lg font-medium transition-all"
+                    >
+                      Save Meal
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          );
+        }
+
+        // Render the app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<FitnessTracker />);
+    </script>
+</body>
+</html>
